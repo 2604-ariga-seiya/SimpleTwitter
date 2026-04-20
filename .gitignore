@@ -1,0 +1,12 @@
+/.classpath
+/.project
+/.settings
+/build
+# 1. webcontent配下のファイルをすべて無視する
+webcontent/**/*
+
+# 2. webcontent配下のディレクトリ構造自体は辿れるようにする
+!webcontent/**/
+
+# 3. webcontent配下のJSPファイルだけは無視しない（管理対象にする）
+!webcontent/**/*.jsp
