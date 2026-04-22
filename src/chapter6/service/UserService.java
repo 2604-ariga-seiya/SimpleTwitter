@@ -112,7 +112,7 @@ public class UserService {
         }
     }
 
-    public void update(User user) {
+    public void update(User user, boolean isPasswordUpdated) {
 
         log.info(new Object(){}.getClass().getEnclosingClass().getName() +
         " : " + new Object(){}.getClass().getEnclosingMethod().getName());
@@ -120,8 +120,10 @@ public class UserService {
         Connection connection = null;
         try {
             // パスワード暗号化
-            String encPassword = CipherUtil.encrypt(user.getPassword());
-            user.setPassword(encPassword);
+        	if(isPasswordUpdated) {
+	            String encPassword = CipherUtil.encrypt(user.getPassword());
+	            user.setPassword(encPassword);
+        	}
 
             connection = getConnection();
             new UserDao().update(connection, user);

@@ -22,7 +22,6 @@ import chapter6.service.UserService;
 @WebServlet(urlPatterns = { "/setting" })
 public class SettingServlet extends HttpServlet {
 
-
 	/**
 	* ロガーインスタンスの生成
 	*/
@@ -63,11 +62,22 @@ public class SettingServlet extends HttpServlet {
 
         HttpSession session = request.getSession();
         List<String> errorMessages = new ArrayList<String>();
+    	boolean isPasswordUpdated = true;
 
         User user = getUser(request);
+
+    	if (StringUtils.isEmpty(user.getPassword())) {
+            // 現在のパスワードを取得してセット
+            String currentPassword = new UserService().select(user.getId()).getPassword();
+            user.setPassword(currentPassword);
+
+            // フラグを false に書き換える
+            isPasswordUpdated = false;
+        }
+
         if (isValid(user, errorMessages)) {
             try {
-                new UserService().update(user);
+                new UserService().update(user, isPasswordUpdated);
             } catch (NoRowsUpdatedRuntimeException e) {
 		    log.warning("他の人によって更新されています。最新のデータを表示しました。データを確認してください。");
                 errorMessages.add("他の人によって更新されています。最新のデータを表示しました。データを確認してください。");
@@ -108,7 +118,6 @@ public class SettingServlet extends HttpServlet {
 
         String name = user.getName();
         String account = user.getAccount();
-        String password = user.getPassword();
         String email = user.getEmail();
 
         if (!StringUtils.isEmpty(name) && (20 < name.length())) {
@@ -118,11 +127,6 @@ public class SettingServlet extends HttpServlet {
             errorMessages.add("アカウント名を入力してください");
         } else if (20 < account.length()) {
             errorMessages.add("アカウント名は20文字以下で入力してください");
-        }
-        if (StringUtils.isEmpty(password)) {
-        	// 現在のパスワードを取得して、userに設定する。
-        	password = new UserService().select(user.getId()).getPassword();
-        	user.setPassword(password);
         }
         if (StringUtils.isEmpty(email)) {
 		errorMessages.add("メールアドレスを入力してください");
