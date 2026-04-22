@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.lang.StringUtils;
+
 import chapter6.beans.User;
 import chapter6.exception.NoRowsUpdatedRuntimeException;
 import chapter6.exception.SQLRuntimeException;
@@ -113,6 +115,32 @@ public class UserDao {
           }
       }
 
+    public User select(Connection connection, String account) {
+
+        PreparedStatement ps = null;
+        try {
+            String sql = "SELECT * FROM users WHERE account = ?";
+
+            ps = connection.prepareStatement(sql);
+            ps.setString(1, account);
+
+            ResultSet rs = ps.executeQuery();
+
+            List<User> users = toUsers(rs);
+            if (users.isEmpty()) {
+                return null;
+            } else if (2 <= users.size()) {
+                throw new IllegalStateException("ユーザーが重複しています");
+            } else {
+                return users.get(0);
+            }
+        } catch (SQLException e) {
+            throw new SQLRuntimeException(e);
+        } finally {
+            close(ps);
+        }
+    }
+
       private List<User> toUsers(ResultSet rs) throws SQLException {
 
   	  log.info(new Object(){}.getClass().getEnclosingClass().getName() +
@@ -178,25 +206,34 @@ public class UserDao {
     	    " : " + new Object(){}.getClass().getEnclosingMethod().getName());
 
     	    PreparedStatement ps = null;
+    	    List<Object> params = new ArrayList<>();
+
     	    try {
     	        StringBuilder sql = new StringBuilder();
     	        sql.append("UPDATE users SET ");
     	        sql.append("    account = ?, ");
+    	        params.add(user.getAccount());
     	        sql.append("    name = ?, ");
+    	        params.add(user.getName());
     	        sql.append("    email = ?, ");
-    	        sql.append("    password = ?, ");
+    	        params.add(user.getEmail());
+    	        if(!StringUtils.isBlank(user.getPassword())) {
+    	        	sql.append("    password = ?, ");
+    	   	        params.add(user.getPassword());
+    	        }
     	        sql.append("    description = ?, ");
+    	        params.add(user.getDescription());
     	        sql.append("    updated_date = CURRENT_TIMESTAMP ");
     	        sql.append("WHERE id = ?");
+    	        params.add(user.getId());
 
     	        ps = connection.prepareStatement(sql.toString());
 
-    	        ps.setString(1, user.getAccount());
-    	        ps.setString(2, user.getName());
-    	        ps.setString(3, user.getEmail());
-    	        ps.setString(4, user.getPassword());
-    	        ps.setString(5, user.getDescription());
-    	        ps.setInt(6, user.getId());
+    	        for(int i = 0; i < params.size(); i++) {
+    	        	// i=0 のときは params.get(0) を psの1番目にセット
+    	            // i=1 のときは params.get(1) を psの2番目にセット
+    	            ps.setObject(i + 1, params.get(i));
+    	        }
 
     	        int count = ps.executeUpdate();
     	        if (count == 0) {

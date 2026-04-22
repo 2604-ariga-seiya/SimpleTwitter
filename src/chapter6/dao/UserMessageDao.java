@@ -51,11 +51,16 @@ public class UserMessageDao {
             sql.append("INNER JOIN users ");
             sql.append("ON messages.user_id = users.id ");
             if(id != null) {
-            	sql.append("Where user_id = " + id);
-            }
+            	sql.append("Where user_id = ?"); //バインド変数つかう
+                sql.append(" ORDER BY created_date DESC limit " + num);
+
+                ps = connection.prepareStatement(sql.toString());
+                ps.setInt(1, id);
+            }else {
             sql.append(" ORDER BY created_date DESC limit " + num);
 
             ps = connection.prepareStatement(sql.toString());
+            }
 
             ResultSet rs = ps.executeQuery();
 

@@ -62,22 +62,12 @@ public class SettingServlet extends HttpServlet {
 
         HttpSession session = request.getSession();
         List<String> errorMessages = new ArrayList<String>();
-    	boolean isPasswordUpdated = true;
 
         User user = getUser(request);
 
-    	if (StringUtils.isEmpty(user.getPassword())) {
-            // 現在のパスワードを取得してセット
-            String currentPassword = new UserService().select(user.getId()).getPassword();
-            user.setPassword(currentPassword);
-
-            // フラグを false に書き換える
-            isPasswordUpdated = false;
-        }
-
         if (isValid(user, errorMessages)) {
             try {
-                new UserService().update(user, isPasswordUpdated);
+                new UserService().update(user);
             } catch (NoRowsUpdatedRuntimeException e) {
 		    log.warning("他の人によって更新されています。最新のデータを表示しました。データを確認してください。");
                 errorMessages.add("他の人によって更新されています。最新のデータを表示しました。データを確認してください。");
@@ -120,17 +110,23 @@ public class SettingServlet extends HttpServlet {
         String account = user.getAccount();
         String email = user.getEmail();
 
-        if (!StringUtils.isEmpty(name) && (20 < name.length())) {
+        if (!StringUtils.isBlank(name) && (20 < name.length())) {
             errorMessages.add("名前は20文字以下で入力してください");
         }
-        if (StringUtils.isEmpty(account)) {
+        if (StringUtils.isBlank(account)) {
             errorMessages.add("アカウント名を入力してください");
         } else if (20 < account.length()) {
             errorMessages.add("アカウント名は20文字以下で入力してください");
         }
-        if (StringUtils.isEmpty(email)) {
+        try {
+        	new UserService().select(account);
+        }catch(IllegalStateException e){
+        	errorMessages.add(e.getMessage());
+        }
+
+        if (StringUtils.isBlank(email)) {
 		errorMessages.add("メールアドレスを入力してください");
-	  } else if (!StringUtils.isEmpty(email) && (50 < email.length())) {
+        } else if (!StringUtils.isBlank(email) && (50 < email.length())) {
             errorMessages.add("メールアドレスは50文字以下で入力してください");
         }
 

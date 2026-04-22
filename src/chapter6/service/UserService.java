@@ -7,6 +7,8 @@ import java.sql.Connection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.lang.StringUtils;
+
 import chapter6.beans.User;
 import chapter6.dao.UserDao;
 import chapter6.logging.InitApplication;
@@ -112,7 +114,27 @@ public class UserService {
         }
     }
 
-    public void update(User user, boolean isPasswordUpdated) {
+    public User select(String account) {
+
+        Connection connection = null;
+        try {
+            connection = getConnection();
+            User user = new UserDao().select(connection, account);
+            commit(connection);
+
+            return user;
+        } catch (RuntimeException e) {
+            rollback(connection);
+            throw e;
+        } catch (Error e) {
+            rollback(connection);
+            throw e;
+        } finally {
+            close(connection);
+        }
+    }
+
+    public void update(User user) {
 
         log.info(new Object(){}.getClass().getEnclosingClass().getName() +
         " : " + new Object(){}.getClass().getEnclosingMethod().getName());
@@ -120,7 +142,7 @@ public class UserService {
         Connection connection = null;
         try {
             // パスワード暗号化
-        	if(isPasswordUpdated) {
+        	if (!StringUtils.isBlank(user.getPassword())) {
 	            String encPassword = CipherUtil.encrypt(user.getPassword());
 	            user.setPassword(encPassword);
         	}

@@ -99,7 +99,12 @@ public class SignUpServlet extends HttpServlet {
         if (StringUtils.isEmpty(account)) {
             errorMessages.add("アカウント名を入力してください");
         } else if (20 < account.length()) {
-            errorMessages.add("アカウント名は20文字以下で入力してください");
+            errorMessages.add("アカウント名は20文字以下で 入力してください");
+        }
+        try {
+        	new UserService().select(account);
+        }catch(IllegalStateException e){
+        	errorMessages.add(e.getMessage());
         }
 
         if (StringUtils.isEmpty(password)) {
