@@ -102,7 +102,10 @@ public class SignUpServlet extends HttpServlet {
             errorMessages.add("アカウント名は20文字以下で 入力してください");
         }
         try {
-        	new UserService().select(account);
+        	User dupulicateUser = new UserService().select(account);
+        	if(dupulicateUser != null) {
+        		errorMessages.add("すでに存在するアカウントです");
+        	}
         }catch(IllegalStateException e){
         	errorMessages.add(e.getMessage());
         }
