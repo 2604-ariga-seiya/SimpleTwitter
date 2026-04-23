@@ -14,53 +14,82 @@ import chapter6.logging.InitApplication;
 
 public class MessageDao {
 
+	/**
+	* ロガーインスタンスの生成
+	*/
+	Logger log = Logger.getLogger("twitter");
 
-    /**
-    * ロガーインスタンスの生成
-    */
-    Logger log = Logger.getLogger("twitter");
+	/**
+	* デフォルトコンストラクタ
+	* アプリケーションの初期化を実施する。
+	*/
+	public MessageDao() {
+		InitApplication application = InitApplication.getInstance();
+		application.init();
 
-    /**
-    * デフォルトコンストラクタ
-    * アプリケーションの初期化を実施する。
-    */
-    public MessageDao() {
-        InitApplication application = InitApplication.getInstance();
-        application.init();
+	}
 
-    }
+	public void insert(Connection connection, Message message) {
 
-    public void insert(Connection connection, Message message) {
+		log.info(new Object() {
+		}.getClass().getEnclosingClass().getName() +
+				" : " + new Object() {
+				}.getClass().getEnclosingMethod().getName());
 
-	  log.info(new Object(){}.getClass().getEnclosingClass().getName() +
-        " : " + new Object(){}.getClass().getEnclosingMethod().getName());
+		PreparedStatement ps = null;
+		try {
+			StringBuilder sql = new StringBuilder();
+			sql.append("INSERT INTO messages ( ");
+			sql.append("    user_id, ");
+			sql.append("    text, ");
+			sql.append("    created_date, ");
+			sql.append("    updated_date ");
+			sql.append(") VALUES ( ");
+			sql.append("    ?, "); // user_id
+			sql.append("    ?, "); // text
+			sql.append("    CURRENT_TIMESTAMP, "); // created_date
+			sql.append("    CURRENT_TIMESTAMP "); // updated_date
+			sql.append(")");
 
-        PreparedStatement ps = null;
-        try {
-            StringBuilder sql = new StringBuilder();
-            sql.append("INSERT INTO messages ( ");
-            sql.append("    user_id, ");
-            sql.append("    text, ");
-            sql.append("    created_date, ");
-            sql.append("    updated_date ");
-            sql.append(") VALUES ( ");
-            sql.append("    ?, ");                  // user_id
-            sql.append("    ?, ");                  // text
-            sql.append("    CURRENT_TIMESTAMP, ");  // created_date
-            sql.append("    CURRENT_TIMESTAMP ");   // updated_date
-            sql.append(")");
+			ps = connection.prepareStatement(sql.toString());
 
-            ps = connection.prepareStatement(sql.toString());
+			ps.setInt(1, message.getUserId());
+			ps.setString(2, message.getText());
 
-            ps.setInt(1, message.getUserId());
-            ps.setString(2, message.getText());
+			ps.executeUpdate();
+		} catch (SQLException e) {
+			log.log(Level.SEVERE, new Object() {
+			}.getClass().getEnclosingClass().getName() + " : " + e.toString(), e);
+			throw new SQLRuntimeException(e);
+		} finally {
+			close(ps);
+		}
+	}
 
-            ps.executeUpdate();
-        } catch (SQLException e) {
-		log.log(Level.SEVERE, new Object(){}.getClass().getEnclosingClass().getName() + " : " + e.toString(), e);
-            throw new SQLRuntimeException(e);
-        } finally {
-            close(ps);
-        }
-    }
+	public void delete(Connection connection,int loginUser, int messageId) {
+
+		log.info(new Object() {
+		}.getClass().getEnclosingClass().getName() +
+				" : " + new Object() {
+				}.getClass().getEnclosingMethod().getName());
+
+		PreparedStatement ps = null;
+		try {
+			StringBuilder sql = new StringBuilder();
+			sql.append("DELETE FROM messages Where id = ? And user_id = ?");
+
+			ps = connection.prepareStatement(sql.toString());
+
+			ps.setInt(1, messageId);
+			ps.setInt(2, loginUser);
+			ps.executeUpdate();
+
+		} catch (SQLException e) {
+			log.log(Level.SEVERE, new Object() {
+			}.getClass().getEnclosingClass().getName() + " : " + e.toString(), e);
+			throw new SQLRuntimeException(e);
+		} finally {
+			close(ps);
+		}
+	}
 }

@@ -22,64 +22,66 @@ import chapter6.service.MessageService;
 @WebServlet(urlPatterns = { "/message" })
 public class MessageServlet extends HttpServlet {
 
+	/**
+	* ロガーインスタンスの生成
+	*/
+	Logger log = Logger.getLogger("twitter");
 
-    /**
-    * ロガーインスタンスの生成
-    */
-    Logger log = Logger.getLogger("twitter");
+	/**
+	* デフォルトコンストラクタ
+	* アプリケーションの初期化を実施する。
+	*/
+	public MessageServlet() {
+		InitApplication application = InitApplication.getInstance();
+		application.init();
 
-    /**
-    * デフォルトコンストラクタ
-    * アプリケーションの初期化を実施する。
-    */
-    public MessageServlet() {
-        InitApplication application = InitApplication.getInstance();
-        application.init();
+	}
 
-    }
+	@Override
+	protected void doPost(HttpServletRequest request, HttpServletResponse response)
+			throws IOException, ServletException {
 
+		log.info(new Object() {
+		}.getClass().getEnclosingClass().getName() +
+				" : " + new Object() {
+				}.getClass().getEnclosingMethod().getName());
 
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws IOException, ServletException {
+		HttpSession session = request.getSession();
+		List<String> errorMessages = new ArrayList<String>();
 
-	  log.info(new Object(){}.getClass().getEnclosingClass().getName() +
-        " : " + new Object(){}.getClass().getEnclosingMethod().getName());
+		String text = request.getParameter("text");
+		if (!isValid(text, errorMessages)) {
+			session.setAttribute("errorMessages", errorMessages);
+			response.sendRedirect("./");
+			return;
+		}
 
-        HttpSession session = request.getSession();
-        List<String> errorMessages = new ArrayList<String>();
+		Message message = new Message();
+		message.setText(text);
 
-        String text = request.getParameter("text");
-        if (!isValid(text, errorMessages)) {
-            session.setAttribute("errorMessages", errorMessages);
-            response.sendRedirect("./");
-            return;
-        }
+		User user = (User) session.getAttribute("loginUser");
+		message.setUserId(user.getId());
 
-        Message message = new Message();
-        message.setText(text);
+		new MessageService().insert(message);
+		response.sendRedirect("./");
+	}
 
-        User user = (User) session.getAttribute("loginUser");
-        message.setUserId(user.getId());
+	private boolean isValid(String text, List<String> errorMessages) {
 
-        new MessageService().insert(message);
-        response.sendRedirect("./");
-    }
+		log.info(new Object() {
+		}.getClass().getEnclosingClass().getName() +
+				" : " + new Object() {
+				}.getClass().getEnclosingMethod().getName());
 
-    private boolean isValid(String text, List<String> errorMessages) {
+		if (StringUtils.isBlank(text)) {
+			errorMessages.add("メッセージを入力してください");
+		} else if (140 < text.length()) {
+			errorMessages.add("140文字以下で入力してください");
+		}
 
-	  log.info(new Object(){}.getClass().getEnclosingClass().getName() +
-        " : " + new Object(){}.getClass().getEnclosingMethod().getName());
-
-        if (StringUtils.isBlank(text)) {
-            errorMessages.add("メッセージを入力してください");
-        } else if (140 < text.length()) {
-            errorMessages.add("140文字以下で入力してください");
-        }
-
-        if (errorMessages.size() != 0) {
-            return false;
-        }
-        return true;
-    }
+		if (errorMessages.size() != 0) {
+			return false;
+		}
+		return true;
+	}
 }
