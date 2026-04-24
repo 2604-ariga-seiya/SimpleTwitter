@@ -74,9 +74,18 @@
 				        </form>
 			        </c:if>
 			        <c:if test="${ loginUser.id == message.userId }">
-				        <form action="edit" method="POST">
+				        <form action="edit" method="GET">
 				        	<input type="hidden" name="message_id" value="${message.id}">
 	  				        <button type="submit">編集</button>
+				        </form>
+			        </c:if>
+			        <c:if test="${ isShowMessageForm }">
+	   			        <form action="comment" method="post">
+				            返信<br />
+				            <textarea name="text" cols="100" rows="5" class="tweet-box"></textarea>
+				            <br />
+				            <input type="hidden" name="message_id" value="${message.id}">
+				            <input type="submit" value="返信">
 				        </form>
 			        </c:if>
 			    </c:forEach>
