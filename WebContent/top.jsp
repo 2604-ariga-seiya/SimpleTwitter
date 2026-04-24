@@ -74,7 +74,7 @@
 				        </form>
 			        </c:if>
 			        <c:if test="${ loginUser.id == message.userId }">
-				        <form action="edit" method="POST">
+				        <form action="edit" method="GET">
 				        	<input type="hidden" name="message_id" value="${message.id}">
 	  				        <button type="submit">編集</button>
 				        </form>
