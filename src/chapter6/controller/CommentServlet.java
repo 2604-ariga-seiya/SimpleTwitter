@@ -83,10 +83,10 @@ public class CommentServlet extends HttpServlet {
 
 		String messageIdStr = request.getParameter("message_id");
 
-		if (messageIdStr == null || !messageIdStr.matches(MESSAGE_ID_REGEX)) {
+		if (StringUtils.isBlank(messageIdStr) || !messageIdStr.matches(MESSAGE_ID_REGEX)) {
 			errorMessages.add("不正なパラメータが入力されました");
-			session.setAttribute("errorMessages", errorMessages);
-			session.setAttribute("loginUser", loginUser);
+			request.setAttribute("errorMessages", errorMessages);
+			request.setAttribute("loginUser", loginUser);
 
 			response.sendRedirect("./");
 			return;
@@ -101,6 +101,7 @@ public class CommentServlet extends HttpServlet {
 		}
 
 		new CommentService().insert(userId, messageId, text);
+		response.sendRedirect("./");
     }
 
 	private boolean isValid(String text, List<String> errorMessages) {

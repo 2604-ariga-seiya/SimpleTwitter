@@ -70,7 +70,7 @@ public class MessageDao {
 		}
 	}
 
-	public Message select(Connection connection, int loginUser, int messageId) {
+	public Message select(Connection connection, int messageId) {
 		log.info(new Object() {
 		}.getClass().getEnclosingClass().getName() +
 				" : " + new Object() {
@@ -80,23 +80,17 @@ public class MessageDao {
 
 		try {
             StringBuilder sql = new StringBuilder();
-            sql.append("SELECT id, user_id, text From messages Where user_id = ? AND id = ?");
+            sql.append("SELECT id, user_id, text From messages Where id = ?");
             ps = connection.prepareStatement(sql.toString());
-            ps.setInt(1, loginUser);
-            ps.setInt(2, messageId);
+            ps.setInt(1, messageId);
 
             ResultSet rs = ps.executeQuery();
-            Message message = null;
+            List<Message> messageList = toUserMessages(rs);
 
-            if (rs.next()) {
-                message = new Message();
-                // ResultSetから取り出してMessageオブジェクトにセットする
-                message.setId(rs.getInt("id"));
-                message.setUserId(rs.getInt("user_id"));
-                message.setText(rs.getString("text"));
-                // 必要に応じて他の項目も
+            if(messageList.isEmpty()) {
+            	return null;
             }
-    		return message;
+    		return messageList.get(0);
 
 		} catch (SQLException e) {
 			log.log(Level.SEVERE, new Object() {
@@ -107,8 +101,29 @@ public class MessageDao {
 		}
 	}
 
+    private List<Message> toUserMessages(ResultSet rs) throws SQLException {
 
-	public void delete(Connection connection,int loginUser, int messageId) {
+
+	  log.info(new Object(){}.getClass().getEnclosingClass().getName() +
+        " : " + new Object(){}.getClass().getEnclosingMethod().getName());
+
+        List<Message> messages = new ArrayList<Message>();
+        try {
+            while (rs.next()) {
+                Message message = new Message();
+                message.setId(rs.getInt("id"));
+                message.setText(rs.getString("text"));
+                message.setUserId(rs.getInt("user_id"));
+
+                messages.add(message);
+            }
+            return messages;
+        } finally {
+            close(rs);
+        }
+    }
+
+	public void delete(Connection connection, int messageId) {
 
 		log.info(new Object() {
 		}.getClass().getEnclosingClass().getName() +
@@ -118,12 +133,11 @@ public class MessageDao {
 		PreparedStatement ps = null;
 		try {
 			StringBuilder sql = new StringBuilder();
-			sql.append("DELETE FROM messages Where id = ? And user_id = ?");
+			sql.append("DELETE FROM messages Where id = ?");
 
 			ps = connection.prepareStatement(sql.toString());
 
 			ps.setInt(1, messageId);
-			ps.setInt(2, loginUser);
 			ps.executeUpdate();
 
 		} catch (SQLException e) {
@@ -135,7 +149,7 @@ public class MessageDao {
 		}
 	}
 
-    public void update(Connection connection, int messageId, int userId, String text) {
+    public void update(Connection connection, Message message) {
 
 	    log.info(new Object(){}.getClass().getEnclosingClass().getName() +
 	    " : " + new Object(){}.getClass().getEnclosingMethod().getName());
@@ -147,11 +161,10 @@ public class MessageDao {
 	        StringBuilder sql = new StringBuilder();
 	        sql.append("UPDATE messages SET ");
 	        sql.append("    text = ?, ");
-	        params.add(text);
+	        params.add(message.getText());
 	        sql.append("    updated_date = CURRENT_TIMESTAMP ");
-	        sql.append("WHERE id = ? AND user_id = ?");
-	        params.add(messageId);
-	        params.add(userId);
+	        sql.append("WHERE id = ?");
+	        params.add(message.getId());
 
 	        ps = connection.prepareStatement(sql.toString());
 

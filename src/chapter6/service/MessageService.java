@@ -11,7 +11,6 @@ import java.util.logging.Logger;
 import org.apache.commons.lang.StringUtils;
 
 import chapter6.beans.Message;
-import chapter6.beans.User;
 import chapter6.beans.UserMessage;
 import chapter6.dao.MessageDao;
 import chapter6.dao.UserMessageDao;
@@ -98,7 +97,7 @@ public class MessageService {
 		}
 	}
 
-	public Message select(User loginUser, int messageId) {
+	public Message select(int messageId) {
 
 		log.info(new Object() {
 		}.getClass().getEnclosingClass().getName() +
@@ -108,7 +107,7 @@ public class MessageService {
 		Connection connection = null;
 		try {
 			connection = getConnection();
-			Message message = new MessageDao().select(connection, loginUser.getId(), messageId);
+			Message message = new MessageDao().select(connection, messageId);
 
 			return message;
 		} catch (RuntimeException e) {
@@ -128,7 +127,7 @@ public class MessageService {
 		}
 	}
 
-	public void delete(User loginUser, int messageId) {
+	public void delete(int messageId) {
 
 		log.info(new Object() {
 		}.getClass().getEnclosingClass().getName() +
@@ -139,7 +138,7 @@ public class MessageService {
 
 		try {
 			connection = getConnection();
-			new MessageDao().delete(connection, loginUser.getId(), messageId);
+			new MessageDao().delete(connection, messageId);
 			commit(connection);
 
 		} catch (RuntimeException e) {
@@ -159,7 +158,7 @@ public class MessageService {
 		}
 	}
 
-	public void update(int messageId, int userId, String text){
+	public void update(Message message){
 
 		log.info(new Object() {
 		}.getClass().getEnclosingClass().getName() +
@@ -170,7 +169,7 @@ public class MessageService {
 
 		try {
 			connection = getConnection();
-			new MessageDao().update(connection, messageId, userId, text);
+			new MessageDao().update(connection, message);
 
 			commit(connection);
 

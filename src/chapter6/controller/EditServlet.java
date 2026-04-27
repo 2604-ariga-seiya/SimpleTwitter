@@ -49,28 +49,21 @@ public class EditServlet extends HttpServlet {
 				}.getClass().getEnclosingMethod().getName());
 
 		HttpSession session = request.getSession();
-		User loginUser = (User) session.getAttribute("loginUser");
+
+		Message message = null;
 
 		List<String> errorMessages = new ArrayList<String>();
 
 		String messageIdStr = request.getParameter("message_id");
 
-		if (messageIdStr == null || !messageIdStr.matches(MESSAGE_ID_REGEX)) {
-			errorMessages.add("不正なパラメータが入力されました");
-			session.setAttribute("errorMessages", errorMessages);
-			session.setAttribute("loginUser", loginUser);
-
-			response.sendRedirect("./");
-			return;
+		if (!StringUtils.isBlank(messageIdStr) && messageIdStr.matches(MESSAGE_ID_REGEX)) {
+			int messageId = Integer.parseInt(request.getParameter("message_id"));
+			message = new MessageService().select(messageId);
 		}
-
-		int messageId = Integer.parseInt(request.getParameter("message_id"));
-		Message message = new MessageService().select(loginUser, messageId);
 
 		if (message == null) {
 			errorMessages.add("不正なパラメータが入力されました");
 			session.setAttribute("errorMessages", errorMessages);
-			session.setAttribute("loginUser", loginUser);
 
 			response.sendRedirect("./");
 			return;
@@ -88,32 +81,30 @@ public class EditServlet extends HttpServlet {
 				" : " + new Object() {
 				}.getClass().getEnclosingMethod().getName());
 
-		HttpSession session = request.getSession();
-		User loginUser = (User) session.getAttribute("loginUser");
 		int messageId = Integer.parseInt(request.getParameter("message_id"));
 		String text = request.getParameter("text");
-		int userId = loginUser.getId();
-
+		HttpSession session = request.getSession();
+		User loginUser = (User) session.getAttribute("loginUser");
 		List<String> errorMessages = new ArrayList<String>();
+		Message message = new Message();
 
 		if (!isValid(text, errorMessages)) {
-			session.setAttribute("errorMessages", errorMessages);
+			request.setAttribute("errorMessages", errorMessages);
 
-			Message message = new Message();
-			message.setId(Integer.parseInt(request.getParameter("message_id")));
+			message.setId(messageId);
 			message.setText(text);
 			message.setUserId(loginUser.getId());
 
 			request.setAttribute("message", message);
-
 			request.getRequestDispatcher("edit.jsp").forward(request, response);
 			return;
 
 		}
 
-		new MessageService().update(messageId, userId, text);
+		message.setId(messageId);
+		message.setText(text);
+		new MessageService().update(message);
 
-		session.setAttribute("loginUser", loginUser);
 		response.sendRedirect("./");
 	}
 
@@ -135,4 +126,5 @@ public class EditServlet extends HttpServlet {
 		}
 		return true;
 	}
+
 }
